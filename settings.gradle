@@ -1,4 +1,5 @@
 rootProject.name = "backend"
 
 include ":addition",
-        ":hello-vertx"
+        ":hello-vertx",
+        ":accounts"
