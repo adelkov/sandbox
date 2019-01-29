@@ -4,6 +4,7 @@ import com.hc.accounts.core.data.UserDTOMemory;
 import com.hc.accounts.core.data.UserModel;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
 public class AccountsService extends AbstractVerticle {
@@ -33,11 +34,15 @@ public class AccountsService extends AbstractVerticle {
         message.reply(JsonObject.mapFrom(user));
     }
 
-    private void deposit(Message message) {
-
+    private void deposit(final Message<JsonObject> message) {
+        UserModel user = userDTOMemory.getUserWithUserName(message.body().getString("userName"));
+        user.deposit(message.body().getInteger("amount"));
+        message.reply(user.getBalance());
     }
 
-    private void withdraw(Message message) {
-
+    private void withdraw(final Message<JsonObject> message) {
+        UserModel user = userDTOMemory.getUserWithUserName(message.body().getString("userName"));
+        user.withdraw(message.body().getInteger("amount"));
+        message.reply(user.getBalance());
     }
 }
