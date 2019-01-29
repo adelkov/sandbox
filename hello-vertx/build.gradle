@@ -1,14 +1,30 @@
 plugins {
     id 'java'
+    id "com.github.johnrengelman.shadow" version "2.0.1"
 }
 
 group 'com.hc'
 version '1.0-SNAPSHOT'
+ext.moduleName = "com.hc.hellovertx"
+ext.modulePath = moduleName.replaceAll("\\.", "/")
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+}
+
+shadowJar {
+    classifier = "standalone"
+    exclude "$modulePath/excluded/**"
+    mergeServiceFiles {
+        include "META-INF/services/io.vertx.core.spi.VerticleFactory"
+    }
+    manifest {
+        attributes "Main-Class": "io.vertx.core.Launcher",
+                "Main-Verticle": "${moduleName}.Application",
+                "Automatic-Module-Name": moduleName
+    }
 }
 
 dependencies {
