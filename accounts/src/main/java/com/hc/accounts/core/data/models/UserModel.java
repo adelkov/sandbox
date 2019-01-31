@@ -1,11 +1,14 @@
-package com.hc.accounts.core.data;
-
-import java.math.BigDecimal;
+package com.hc.accounts.core.data.models;
 
 public class UserModel {
     private String userName;
     private String userId;
     private int balance;
+
+
+    // Required default constructor for JsonObject's mapto method.
+    public UserModel() {
+    }
 
     public UserModel(String userName, String userId, int balance) {
         this.userName = userName;

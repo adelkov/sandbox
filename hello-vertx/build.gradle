@@ -30,5 +30,7 @@ shadowJar {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile group: 'io.vertx', name: 'vertx-core', version: '3.5.0'
+    compile 'io.vertx:vertx-web:3.6.2'
+    compile 'io.vertx:vertx-web-client:3.6.2'
     compile project(":addition")
 }

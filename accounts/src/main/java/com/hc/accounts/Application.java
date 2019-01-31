@@ -1,69 +1,69 @@
 package com.hc.accounts;
 
+import com.hc.accounts.api.AccountsEventBusClient;
 import com.hc.accounts.core.AccountsService;
-import com.hc.accounts.core.data.UserDTOMemory;
+import com.hc.accounts.core.RestAPI;
+import com.hc.accounts.core.data.UserDAOMemory;
+import com.hc.accounts.core.data.models.DepositRequest;
+import com.hc.accounts.core.data.models.UserModel;
+import com.hc.accounts.core.data.models.WithdrawRequest;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.json.JsonObject;
 
 
 public class Application extends AbstractVerticle {
     private EventBus eventBus;
+    private AccountsEventBusClient accountsEventbusClient;
 
     @Override
     public void start() throws Exception {
         super.start();
-        vertx.deployVerticle(new AccountsService(new UserDTOMemory()));
+
+        vertx.deployVerticle(new RestAPI());
+        vertx.deployVerticle(new AccountsService(new UserDAOMemory()));
+
         this.eventBus = vertx.eventBus();
+        this.accountsEventbusClient = new AccountsEventBusClient(this.eventBus);
+
         addUserTest();
-        withrawTest();
+        withdrawTest();
         depositTest();
     }
 
-    private void withrawTest() {
-        JsonObject request = new JsonObject()
-                .put("userName", "Alma Fa")
-                .put("amount", 10);
-        this.eventBus.send("WITHDRAW", request, res -> {
-            res.map(result -> {
-                System.out.println("Withdraw test result (new balance): " + result.body());
-                return result;
-            }).otherwise(error -> {
-                System.out.println(error.getMessage());
-                return null;
-            });
+    private void withdrawTest() {
+        WithdrawRequest request = new WithdrawRequest("AK2018/1", 21);
+        this.accountsEventbusClient.withDraw(request).map(result -> {
+            System.out.println("Withdraw test result (new balance): " + result);
+            return result;
+        }).otherwise(error -> {
+            System.out.println(error.getMessage());
+            return null;
         });
     }
 
-
     private void depositTest() {
-        JsonObject request = new JsonObject()
-                .put("userName", "Alma Fa")
-                .put("amount", 100);
-        this.eventBus.send("DEPOSIT", request, res -> {
-            res.map(result -> {
-                System.out.println("Deposit test result (new balance): " + result.body());
-                return result;
-            }).otherwise(error -> {
-                System.out.println(error.getMessage());
-                return null;
-            });
-        });
+        DepositRequest depositRequest = new DepositRequest("AK2018/1", 12323);
+        accountsEventbusClient.deposit(depositRequest)
+                .map(result -> {
+                    System.out.println("Deposit test result (new balance): " + result);
+                    return result;
+                })
+                .otherwise(error -> {
+                    System.out.println(error.getMessage());
+                    return null;
+                });
     }
 
     private void addUserTest() {
-        JsonObject user = new JsonObject()
-                .put("userName", "Alma Fa")
-                .put("userId", "Id131313")
-                .put("balance", 0);
-        this.eventBus.send("ADD_USER", user, res -> {
-            res.map(result -> {
-                System.out.println("Add user test result: " + result.body());
-                return result;
-            }).otherwise(error -> {
-                System.out.println(error.getMessage());
-                return null;
-            });
-        });
+        UserModel user = new UserModel("Alma Fa", "Id131313", 0);
+        this.accountsEventbusClient.addUser(user)
+                .map(result -> {
+                    System.out.println("Add user test result: " + result);
+                    return result;
+                })
+                .otherwise(error -> {
+                    System.out.println(error.getMessage());
+                    return null;
+                });
     }
 }
