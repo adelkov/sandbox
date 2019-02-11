@@ -5,7 +5,6 @@ public class UserModel {
     private String userId;
     private int balance;
 
-
     // Required default constructor for JsonObject's mapto method.
     public UserModel() {
     }
@@ -44,5 +43,9 @@ public class UserModel {
     public int deposit(int amount) {
         this.balance += amount;
         return this.balance;
+    }
+
+    public void setBalance(String balance) {
+        this.balance = Integer.parseInt(balance);
     }
 }

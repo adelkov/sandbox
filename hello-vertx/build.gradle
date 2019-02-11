@@ -28,9 +28,13 @@ shadowJar {
 }
 
 dependencies {
+    compile project(":addition")
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile group: 'io.vertx', name: 'vertx-core', version: '3.5.0'
     compile 'io.vertx:vertx-web:3.6.2'
     compile 'io.vertx:vertx-web-client:3.6.2'
-    compile project(":addition")
+    compile 'io.vertx:vertx-jdbc-client:3.6.2'
+    compile 'io.vertx:vertx-mysql-postgresql-client:3.6.2'
+    compile 'io.vertx:vertx-sql-common:3.6.2'
+    compile "org.postgresql:postgresql:42.2.1"
 }

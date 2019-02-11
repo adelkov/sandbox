@@ -1,47 +1,64 @@
 package com.hc.hellovertx;
 
-import com.hc.addition.api.AdditionEventbusClient;
-import com.hc.addition.api.AdditionRestClient;
-import com.hc.addition.core.AdditionService;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.asyncsql.PostgreSQLClient;
+import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.sql.ResultSet;
+import io.vertx.ext.sql.SQLClient;
+import io.vertx.ext.sql.SQLConnection;
 
-import java.util.function.Function;
-
+import static io.vertx.ext.jdbc.JDBCClient.createShared;
 
 public class Application extends AbstractVerticle {
 
     @Override
     public void start() throws Exception {
         super.start();
-        JsonObject addends = new JsonObject().put("x", "12").put("y", "111");
 
-        // Event bus client
-        vertx.deployVerticle(new AdditionService());
-        AdditionEventbusClient additionEventbusClient = new AdditionEventbusClient(vertx.eventBus());
-        additionEventbusClient.add(addends).map(res -> {
-            System.out.println("Result with EventBus client: " + res);
-            return res;
-        });
+        JsonObject config = new JsonObject()
+                .put("url", "jdbc:postgresql://localhost:5432/accounts")
+                .put("driver_class", "org.postgresql.Driver")
+                .put("user", "kovacsadel");
+        SQLClient client = JDBCClient.createShared(vertx, config);
 
-        // Rest client
-        WebClientOptions options = new WebClientOptions();
-        options
-                .setDefaultHost("localhost")
-                .setDefaultPort(8080)
-                .addCrlPath("/add");
-        WebClient webClient = WebClient.create(vertx, options);
-        AdditionRestClient additionRestClient = new AdditionRestClient(webClient);
-        additionRestClient.add(addends)
-                .map(res -> {
-                    System.out.println("Result with rest client: " + res);
-                    return res;
-                }).otherwise(error -> {
-            System.out.println(error.getMessage());
-            return null;
+        client.getConnection(res -> {
+            if (res.succeeded()) {
+                SQLConnection connection = res.result();
+
+//                connection.query(
+//                        "DROP TABLE users; CREATE TABLE users (userid varchar(30), username varchar(255), balance int );",
+//                        result3 -> {
+//                            if (result3.succeeded()) {
+//                                System.out.println("table created...");
+//                            } else {
+//                                System.out.println(result3.cause().getMessage());
+//                            }
+//                        });
+
+                connection.query("INSERT INTO public.users (userid, username, balance)\n" +
+                        "VALUES ('valami', 'value2', 1);", result -> {
+                    if (result.succeeded()) {
+                        System.out.println("okay");
+                    } else {
+                        System.out.println(result.cause().getMessage());
+                    }
+                });
+
+                connection.query("SELECT userid, username, balance\n" +
+                        "FROM public.users;", res2 -> {
+                    if (res2.succeeded()) {
+
+                        ResultSet rs = res2.result();
+                        System.out.println(rs.getRows().get(0));
+                        // Do something with results
+                    } else {
+                        System.out.println(res2.cause().getMessage());
+                    }
+                });
+            } else {
+                // Failed to get connection - deal with it
+            }
         });
     }
 }

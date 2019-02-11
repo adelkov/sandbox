@@ -1,17 +1,19 @@
 package com.hc.accounts.core;
 
-import com.hc.accounts.core.data.UserDAOMemory;
+import com.hc.accounts.core.data.UserDAODatabase;
+import com.hc.accounts.core.data.models.DepositRequest;
 import com.hc.accounts.core.data.models.UserModel;
+import com.hc.accounts.core.data.models.WithdrawRequest;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 
 public class AccountsService extends AbstractVerticle {
 
-    private UserDAOMemory userDAOMemory;
+    private UserDAODatabase userDAO;
 
-    public AccountsService(UserDAOMemory userDAOMemory) {
-        this.userDAOMemory = userDAOMemory;
+    public AccountsService(UserDAODatabase userDAO) {
+        this.userDAO = userDAO;
     }
 
     @Override
@@ -29,10 +31,19 @@ public class AccountsService extends AbstractVerticle {
             message.fail(-404, "missing userName");
         }
 
-        if (userDAOMemory.getUserWithUserId(user.getUserId()) == null) {
-            userDAOMemory.addUser(user);
+        if (user.getUserId() == null) {
+            message.fail(-404, "missing userId");
         }
-        message.reply(user.getUserId());
+
+        userDAO.addUser(user)
+                .map(res -> {
+                    message.reply(res.getUserId());
+                    return res;
+                })
+                .otherwise(error -> {
+                    message.fail(-500, "server error");
+                    return null;
+                });
     }
 
     private void deposit(final Message<JsonObject> message) {
@@ -41,8 +52,6 @@ public class AccountsService extends AbstractVerticle {
             return;
         }
 
-        UserModel user = userDAOMemory.getUserWithUserId(message.body().getString("userId"));
-
         if (message.body().getInteger("amount") == null) {
             message.fail(-404, "missing amount");
             return;
@@ -50,12 +59,19 @@ public class AccountsService extends AbstractVerticle {
 
         if (message.body().getInteger("amount") < 0) {
             message.fail(-404, "negative amount");
-            return;
         }
 
-        user.deposit(message.body().getInteger("amount"));
-        message.reply(user.getBalance());
+        userDAO.deposit(message.body().mapTo(DepositRequest.class))
+                .map(res -> {
+                    message.reply(res);
+                    return res;
+                })
+                .otherwise(error -> {
+                    message.fail(-500, "server error");
+                    return null;
+                });
     }
+
 
     private void withdraw(final Message<JsonObject> message) {
         if (message.body().getString("userId") == null) {
@@ -63,8 +79,6 @@ public class AccountsService extends AbstractVerticle {
             return;
         }
 
-        UserModel user = userDAOMemory.getUserWithUserId(message.body().getString("userId"));
-
         if (message.body().getInteger("amount") == null) {
             message.fail(-404, "missing amount");
             return;
@@ -72,10 +86,17 @@ public class AccountsService extends AbstractVerticle {
 
         if (message.body().getInteger("amount") < 0) {
             message.fail(-404, "negative amount");
-            return;
         }
 
-        user.withdraw(message.body().getInteger("amount"));
-        message.reply(user.getBalance());
+        userDAO.withdraw(message.body().mapTo(WithdrawRequest.class))
+                .map(res -> {
+                    message.reply(res);
+                    return res;
+                })
+                .otherwise(error -> {
+                    message.fail(-500, "server error");
+                    return null;
+                });
+
     }
 }

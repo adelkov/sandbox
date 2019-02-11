@@ -1,12 +1,20 @@
 package com.hc.accounts.core.data;
 
+import com.hc.accounts.core.data.models.DepositRequest;
 import com.hc.accounts.core.data.models.UserModel;
+import com.hc.accounts.core.data.models.WithdrawRequest;
+import io.vertx.core.AsyncResult;
+
 import java.util.Map;
 
 interface UserDAOInterface {
-    UserModel getUserWithUserId(String userId);
+    AsyncResult<UserModel> getUserWithUserId(String userId);
 
-    UserModel addUser(UserModel user);
+    AsyncResult<UserModel> addUser(UserModel user);
 
-    Map<String, UserModel> getUsers();
+    AsyncResult<Map<String, UserModel>> getUsers();
+
+    AsyncResult<Integer> withdraw(WithdrawRequest request);
+
+    AsyncResult<Integer> deposit(DepositRequest request);
 }
